@@ -1,0 +1,47 @@
+name: Render Video
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install dependencies
+        run: |
+          npm install
+          pip install edge-tts
+
+      - name: Generate Audio
+        run: python scripts/generate_audio.py
+
+      - name: Render Video
+        run: |
+          mkdir -p out
+          npx remotion render Microchimerism out/video.mp4 --codec=h264
+        env:
+          REMOTION_ALLOW_EVAL: true
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: video
+          path: out/video.mp4
